@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+    />
+    <title>Chill</title>
+    <meta name="description" content="Fondasi proyek website Jaring." />
+    <meta property="og:title" content="Jaring" />
+    <meta property="og:description" content="Fondasi proyek website Jaring." />
+    <meta property="og:type" content="website" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <script>
+      // Tangani dan cegah error cross-origin iframe saat ekstensi/library mengecek window.ethereum pada parent frame
+      (function () {
+        var isCrossFrameEthError = function (msg) {
+          if (!msg || typeof msg !== 'string') return false;
+          return (
+            msg.indexOf('ethereum') !== -1 &&
+            (msg.indexOf('cross-origin') !== -1 ||
+              msg.indexOf('Blocked a frame') !== -1 ||
+              msg.indexOf('cross-origin frame') !== -1)
+          );
+        };
+
+        var origConsoleError = console.error;
+        console.error = function () {
+          var args = Array.prototype.slice.call(arguments);
+          var text = args
+            .map(function (a) {
+              return typeof a === 'string' ? a : (a && a.message) || '';
+            })
+            .join(' ');
+          if (isCrossFrameEthError(text)) {
+            return;
+          }
+          return origConsoleError.apply(console, arguments);
+        };
+
+        window.onerror = function (msg, url, line, col, error) {
+          var str =
+            (msg || '') + ' ' + (error && error.message ? error.message : '');
+          if (isCrossFrameEthError(str)) {
+            return true;
+          }
+        };
+
+        window.addEventListener(
+          'error',
+          function (event) {
+            var msg =
+              (event &&
+                (event.message || (event.error && event.error.message))) ||
+              '';
+            if (isCrossFrameEthError(msg)) {
+              if (typeof event.preventDefault === 'function') {
+                event.preventDefault();
+              }
+              if (typeof event.stopImmediatePropagation === 'function') {
+                event.stopImmediatePropagation();
+              }
+              return true;
+            }
+          },
+          true
+        );
+
+        window.addEventListener(
+          'unhandledrejection',
+          function (event) {
+            var msg =
+              (event &&
+                event.reason &&
+                (event.reason.message || String(event.reason))) ||
+              '';
+            if (isCrossFrameEthError(msg)) {
+              if (typeof event.preventDefault === 'function') {
+                event.preventDefault();
+              }
+              if (typeof event.stopImmediatePropagation === 'function') {
+                event.stopImmediatePropagation();
+              }
+              return true;
+            }
+          },
+          true
+        );
+      })();
+    </script>
+    <script>
+      // Mencegah browser tablet/iPad melakukan zoom pada seluruh halaman saat pinch gesture
+      document.addEventListener(
+        'gesturestart',
+        function (e) {
+          e.preventDefault();
+        },
+        { passive: false }
+      );
+      document.addEventListener(
+        'gesturechange',
+        function (e) {
+          e.preventDefault();
+        },
+        { passive: false }
+      );
+      (function () {
+        try {
+          var g = typeof globalThis !== 'undefined' ? globalThis : window;
+          var originalFetch = g.fetch;
+          if (originalFetch) {
+            var currentFetch = originalFetch;
+            var descriptor = {
+              get: function () {
+                return currentFetch;
+              },
+              set: function (val) {
+                currentFetch = val;
+              },
+              configurable: true,
+              enumerable: true,
+            };
+            try {
+              Object.defineProperty(g, 'fetch', descriptor);
+            } catch (e) {}
+            if (typeof Window !== 'undefined' && Window.prototype) {
+              try {
+                Object.defineProperty(Window.prototype, 'fetch', descriptor);
+              } catch (e) {}
+            }
+          }
+        } catch (err) {}
+      })();
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
+
