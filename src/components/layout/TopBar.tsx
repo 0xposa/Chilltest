@@ -41,9 +41,12 @@ export default function TopBar({ className = '', onResetLayout, isProfile: isPro
       <div className="flex items-center gap-3">
         <Link
           to="/app"
-          className="text-base font-semibold tracking-tight text-white hover:text-zinc-300 transition"
+          className="flex items-center gap-2 text-base font-bold tracking-tight text-white hover:text-lime-400 transition"
         >
-          Chill
+          <span className="flex h-6 w-6 items-center justify-center rounded-md bg-lime-500/20 text-lime-400 text-xs font-black border border-lime-500/40">
+            👹
+          </span>
+          Goblin
         </Link>
         <span className="rounded-full bg-[#1a1a24] px-3 py-1 text-[14px] font-medium text-white">
           {MOCK_PAIR}

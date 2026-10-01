@@ -3,19 +3,51 @@ import react from '@vitejs/plugin-react';
 import path from 'path';
 import {defineConfig} from 'vite';
 
-export default defineConfig(() => {
+function safeEthereumPlugin() {
   return {
-    plugins: [react(), tailwindcss()],
+    name: 'safe-ethereum-plugin',
+    enforce: 'pre' as const,
+    transform(code: string) {
+      if (
+        code.includes('top?.ethereum') ||
+        code.includes('top.ethereum') ||
+        code.includes('parent?.ethereum') ||
+        code.includes('parent.ethereum') ||
+        code.includes('_b.ethereum')
+      ) {
+        return {
+          code: code
+            .replace(/\(_b\s*=\s*window\.top\)\s*===\s*null\s*\|\|\s*_b\s*===\s*void\s*0\s*\?\s*void\s*0\s*:\s*_b\.ethereum/g, 'undefined')
+            .replace(/window\.top\?\.ethereum/g, '(window.ethereum)')
+            .replace(/window\.top\.ethereum/g, '(window.ethereum)')
+            .replace(/window\.parent\?\.ethereum/g, '(window.ethereum)')
+            .replace(/window\.parent\.ethereum/g, '(window.ethereum)')
+            .replace(/top\?\.ethereum/g, '(window.ethereum)')
+            .replace(/parent\?\.ethereum/g, '(window.ethereum)'),
+          map: null,
+        };
+      }
+    },
+  };
+}
+
+export default defineConfig(() => {
+  const root = process.cwd();
+
+  return {
+    plugins: [safeEthereumPlugin(), react(), tailwindcss()],
     resolve: {
       alias: [
-        { find: /^cross-fetch$/, replacement: path.resolve(__dirname, 'src/lib/crossFetchShim.ts') },
-        { find: /^cross-fetch\/.*$/, replacement: path.resolve(__dirname, 'src/lib/crossFetchShim.ts') },
-        { find: /.*\/getInjectedProvider(\.js)?$/, replacement: path.resolve(__dirname, 'src/lib/getInjectedProviderShim.ts') },
-        { find: /.*\/util\/provider(\.js)?$/, replacement: path.resolve(__dirname, 'src/lib/coinbaseProviderShim.ts') },
-        { find: '@', replacement: path.resolve(__dirname, '.') },
+        { find: /^cross-fetch$/, replacement: path.resolve(root, 'src/lib/crossFetchShim.ts') },
+        { find: /^cross-fetch\/.*$/, replacement: path.resolve(root, 'src/lib/crossFetchShim.ts') },
+        { find: /.*\/getInjectedProvider(\.js)?$/, replacement: path.resolve(root, 'src/lib/getInjectedProviderShim.ts') },
+        { find: /.*\/util\/provider(\.js)?$/, replacement: path.resolve(root, 'src/lib/coinbaseProviderShim.ts') },
+        { find: '@', replacement: path.resolve(root, '.') },
       ],
     },
     server: {
+      port: 3000,
+      host: '0.0.0.0',
       proxy: {
         '/api/v3': {
           target: 'https://exchange.kuru.io',

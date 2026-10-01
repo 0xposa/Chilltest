@@ -6,22 +6,79 @@
       name="viewport"
       content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
     />
-    <title>Chill</title>
-    <meta name="description" content="Fondasi proyek website Jaring." />
-    <meta property="og:title" content="Jaring" />
-    <meta property="og:description" content="Fondasi proyek website Jaring." />
+    <title>Goblin</title>
+    <meta
+      name="description"
+      content="Goblin - On-chain limit ladder trading and social nets on Monad."
+    />
+    <meta property="og:title" content="Goblin" />
+    <meta
+      property="og:description"
+      content="Goblin - On-chain limit ladder trading and social nets on Monad."
+    />
     <meta property="og:type" content="website" />
     <meta name="twitter:card" content="summary_large_image" />
     <script>
-      // Tangani dan cegah error cross-origin iframe saat ekstensi/library mengecek window.ethereum pada parent frame
+      // Safe Window proxy & error interceptor to prevent cross-origin iframe security errors (e.g. window.top.ethereum access)
       (function () {
+        function createSafeWindowProxy(targetWindow) {
+          try {
+            return new Proxy(targetWindow, {
+              get: function (target, prop, receiver) {
+                try {
+                  return Reflect.get(target, prop, receiver);
+                } catch (e) {
+                  return undefined;
+                }
+              },
+              has: function (target, prop) {
+                try {
+                  return Reflect.has(target, prop);
+                } catch (e) {
+                  return false;
+                }
+              },
+            });
+          } catch (e) {
+            return targetWindow;
+          }
+        }
+
+        try {
+          if (typeof window !== 'undefined') {
+            if (window.parent && window.parent !== window) {
+              var parentProxy = createSafeWindowProxy(window.parent);
+              try {
+                Object.defineProperty(window, 'parent', {
+                  get: function () {
+                    return parentProxy;
+                  },
+                  configurable: true,
+                });
+              } catch (e) {}
+            }
+            if (window.top && window.top !== window) {
+              var topProxy = createSafeWindowProxy(window.top);
+              try {
+                Object.defineProperty(window, 'top', {
+                  get: function () {
+                    return topProxy;
+                  },
+                  configurable: true,
+                });
+              } catch (e) {}
+            }
+          }
+        } catch (e) {}
+
         var isCrossFrameEthError = function (msg) {
           if (!msg || typeof msg !== 'string') return false;
           return (
             msg.indexOf('ethereum') !== -1 &&
             (msg.indexOf('cross-origin') !== -1 ||
               msg.indexOf('Blocked a frame') !== -1 ||
-              msg.indexOf('cross-origin frame') !== -1)
+              msg.indexOf('cross-origin frame') !== -1 ||
+              msg.indexOf('named property') !== -1)
           );
         };
 
@@ -39,6 +96,20 @@
           return origConsoleError.apply(console, arguments);
         };
 
+        var origConsoleWarn = console.warn;
+        console.warn = function () {
+          var args = Array.prototype.slice.call(arguments);
+          var text = args
+            .map(function (a) {
+              return typeof a === 'string' ? a : (a && a.message) || '';
+            })
+            .join(' ');
+          if (isCrossFrameEthError(text)) {
+            return;
+          }
+          return origConsoleWarn.apply(console, arguments);
+        };
+
         window.onerror = function (msg, url, line, col, error) {
           var str =
             (msg || '') + ' ' + (error && error.message ? error.message : '');
@@ -52,7 +123,8 @@
           function (event) {
             var msg =
               (event &&
-                (event.message || (event.error && event.error.message))) ||
+                (event.message ||
+                  (event.error && (event.error.message || String(event.error))))) ||
               '';
             if (isCrossFrameEthError(msg)) {
               if (typeof event.preventDefault === 'function') {
@@ -139,4 +211,3 @@
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
-

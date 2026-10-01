@@ -10,9 +10,12 @@ export default function LandingPage() {
           <Link
             to="/"
             onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-            className="text-xl font-semibold tracking-tight text-white hover:text-zinc-300 transition cursor-pointer"
+            className="flex items-center gap-2.5 text-xl font-bold tracking-tight text-white hover:text-lime-400 transition cursor-pointer"
           >
-            Chill
+            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-lime-500/20 text-lime-400 text-base font-black border border-lime-500/40">
+              👹
+            </span>
+            Goblin
           </Link>
           <Link
             to="/app"
